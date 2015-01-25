@@ -1,0 +1,84 @@
+
+setwd("C:/Users/Aspen_2/Downloads/getdata_projectfiles_UCI HAR Dataset/UCI HAR Dataset/test")
+testdata <- read.table("X_test.txt")
+testlabels <- read.table("y_test.txt")
+testsubjects <- read.table("subject_test.txt")
+
+
+setwd("C:/Users/Aspen_2/Downloads/getdata_projectfiles_UCI HAR Dataset/UCI HAR Dataset")
+features <- read.table("features.txt")
+  
+lbldf <- data.frame(c(1:6), c("WALKING", "WALKING_UPSTAIRS", "WALKING_DOWNSTAIRS", "SITTING", "STANDING", "LAYING"), stringsAsFactors = FALSE)
+names(lbldf) <- c("labelNum", "labelName")
+
+names(testlabels) <- "Labels"
+
+testlabels <- merge(testlabels, lbldf, by.x = "Labels", by.y = "labelNum")
+
+
+names(testsubjects) <- "Subjects"
+  
+names(testdata) <- as.character(features$V2)
+testbind <- cbind(testsubjects, testlabels, testdata)
+
+rm(testlabels)
+rm(testsubjects)
+
+lst <- sort(c(1, 2, 3,  grep("mean(", colnames(testbind), fixed=T),  grep("std(", colnames(testbind), fixed=T)))
+
+testbind <- testbind[ ,lst]
+
+
+
+#---------------------------------
+
+
+setwd("C:/Users/Aspen_2/Downloads/getdata_projectfiles_UCI HAR Dataset/UCI HAR Dataset/train")
+traindata <- read.table("X_train.txt")
+trainlabels <- read.table("y_train.txt")
+trainsubjects <- read.table("subject_train.txt")
+
+names(trainlabels) <- "Labels"
+
+trainlabels <- merge(trainlabels, lbldf, by.x = "Labels", by.y = "labelNum")
+
+
+names(trainsubjects) <- "Subjects"
+
+names(traindata) <- as.character(features$V2)
+trainbind <- cbind(trainsubjects, trainlabels, traindata)
+
+rm(trainlabels)
+rm(trainsubjects)
+
+lst <- sort(c(1, 2, 3,  grep("mean(", colnames(trainbind), fixed=T),  grep("std(", colnames(trainbind), fixed=T)))
+
+trainbind <- trainbind[ ,lst]
+
+
+finalbind <- rbind(testbind, trainbind)
+
+#----------------------------------------
+
+sublist <-sort(unique(finalbind$Subjects))
+actlist <- sort(unique(finalbind$labelName))
+resultset <- finalbind[0, -2]
+
+for(i in sublist){
+  
+  for(j in actlist){
+    
+    x <- finalbind[finalbind$Subjects==i, -2]
+    x <- x[x$labelName == j, ]
+    
+    if(!NROW(x) == 0)
+    {
+     z <- sapply(x[, 3:68], mean, simplify = TRUE, USE.NAMES = TRUE)
+     resultset[NROW(resultset)+1, 1:2] <- c(i, j)
+     resultset[NROW(resultset), 3:68] <- z
+    }
+  }
+
+}
+
+
